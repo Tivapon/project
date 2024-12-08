@@ -1,5 +1,4 @@
-// SOSOverlay.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faPhone } from '@fortawesome/free-solid-svg-icons';
 
@@ -7,14 +6,24 @@ const SOSOverlay = ({ isOpen, onClose }) => {
   const [address, setAddress] = useState('');
   const [situationDetails, setSituationDetails] = useState('');
 
+  // Add an effect to close the overlay when the 'Esc' key is pressed
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const handleSubmit = (event) => {
     event.preventDefault(); // Prevent the default form submission
     console.log("Address:", address);
     console.log("Situation Details:", situationDetails);
-    
-    // Here you can add the logic to handle the submitted data, e.g., send to an API
+    // Add your logic here, e.g., send the data to an API or perform other actions.
 
-    // Close the overlay
+    // Close the overlay after submission
     onClose();
   };
 
@@ -22,7 +31,7 @@ const SOSOverlay = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-11/12 md:w-1/2">
+      <div className="bg-white rounded-lg p-6 w-11/12 md:w-1/2 relative">
         <h2 className="text-lg font-bold mb-4">Additional Details</h2>
 
         <form onSubmit={handleSubmit}>
@@ -62,8 +71,14 @@ const SOSOverlay = ({ isOpen, onClose }) => {
             <button type="submit" className="bg-green-500 text-white py-2 px-4 rounded">Submit</button>
           </div>
         </form>
-        
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600">✖️</button>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 transition duration-200"
+        >
+          ✖️
+        </button>
       </div>
     </div>
   );

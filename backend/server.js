@@ -1,31 +1,17 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3002; // Use port from .env or default to 3002
+const port = process.env.PORT || 5000;
 
-// Check if MONGODB_URI exists
-if (!process.env.MONGODB_URI) {
-  console.error('MongoDB URI not found in environment variables.');
-  process.exit(1);
-}
+// MongoDB connection URI
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/psu_alerts';
 
-const uri = process.env.MONGODB_URI;
-
-// Create MongoDB client
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-  useUnifiedTopology: true // Ensures compatibility with MongoDB's server discovery and monitoring engine
-});
-
+// Middleware
 app.use(cors({
-  origin: 'http://localhost:3000' // Allow CORS for this origin
+  origin: 'http://localhost:3000' // Allow CORS for this origin (frontend)
 }));
 app.use(express.json());
 
@@ -33,23 +19,22 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
-// Connect to MongoDB Atlas and start the server
-async function connectDB() {
-  try {
-    await client.connect();
-    console.log("Connected to MongoDB Atlas");
+// Contact routes
+const contactRoutes = require('./routes/contact.routes');
+app.use('/api/contacts', contactRoutes);
 
-    // Start the server after MongoDB connection is established
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
+// Connect to MongoDB using Mongoose
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB (via Mongoose)');
+}).catch(err => {
+  console.error('Mongoose connection error:', err);
+  process.exit(1);
+});
 
-  } catch (e) {
-    console.error('Error connecting to MongoDB:', e.message || e); // Provide detailed error
-    process.exit(1); // Exit the process with error code
-  }
-}
-
-// Call the connectDB function to connect to MongoDB and start the server
-connectDB();
-
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

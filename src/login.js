@@ -1,3 +1,4 @@
+//login.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
@@ -37,7 +38,15 @@ const Login = () => {
       // If login is successful
       if (response.data.msg === 'User login success') {
         localStorage.setItem('token', response.data.token);
-        setOverlayOpen(true); // Open overlay for username input
+
+        // Check if username is already stored
+        const storedUsername = localStorage.getItem('username');
+        if (!storedUsername) {
+          setOverlayOpen(true); // Open overlay for username input
+        } else {
+          // If username exists, navigate to home directly
+          navigate('/home');
+        }
       } else if (response.data.msg === 'Admin login success') {
         localStorage.setItem('token', response.data.token);
         navigate('/home'); // Redirect to Home after successful admin login

@@ -19,29 +19,24 @@ self.addEventListener('install', (event) => {
 });
 
 // เปิดใช้งาน Service Worker
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activated');
-  // ลบแคชเก่า
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Clearing old cache');
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
-
-// จัดการการดึงข้อมูล
 self.addEventListener('fetch', (event) => {
-  console.log('Service Worker: Fetching', event.request.url);
+  const requestUrl = new URL(event.request.url);
+
+  // ตรวจสอบว่าคำขอเป็น API หรือไม่ ถ้าใช่ ให้ส่งคำขอนี้ต่อไปยังเครือข่ายโดยตรง
+  if (requestUrl.pathname.startsWith('/api')) {
+    // ไม่แคชคำขอที่เป็น API
+    return fetch(event.request).then((response) => response).catch((err) => {
+      console.error('Failed to fetch API:', err);
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+    });
+  }
+
+  // จัดการคำขออื่น ๆ ด้วยแคช
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // ตรวจสอบว่าไฟล์มีในแคชหรือไม่
       return response || fetch(event.request).catch(() => {
         return new Response('Offline', {
           status: 503,
